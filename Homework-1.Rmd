@@ -99,6 +99,9 @@ legend(-2, -1, legend=c("Linear", "Squared terms"),
        col=c("black", "red"), lty=1, cex=0.8)
 ```
 
+## Describe how this more flexible model affects the bias-variance tradeoff
+
+Based on the above graph, the more flexible model has more bias since it is more fit to our specific data. This also reduces variance since the distance between observations and predictions should be smaller. 
 
 ## KNN Classifier
 
