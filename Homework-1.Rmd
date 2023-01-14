@@ -39,21 +39,21 @@ plot_mix_data <- function(dat, datboot=NULL) {
 plot_mix_data(dat)
 
 
-
 ## fit linear classifier
-fit_lc <- function(y, x) {
-  x <- cbind(1, x)
-  beta <- drop(solve(t(x)%*%x)%*%t(x)%*%y) #least squares
+fit_lc <- function(y, x1, x2, data) {
+  lm(y ~ x1 + x2, data = data)
 }
 
+
 ## make predictions from linear classifier
-predict_lc <- function(x, beta) {
-  cbind(1, x) %*% beta #y hat
+predict_lc <- function(fit, newx) { #x, beta) {
+  #cbind(1, x) %*% beta #y hat
+  predict(fit, newx)
 }
 
 ## fit model to mixture data and make predictions #on grid of values
-lc_beta <- fit_lc(dat$y, dat$x)
-lc_pred <- predict_lc(dat$xnew, lc_beta)
+lc_lm <- fit_lc(dat$y, dat$x[,1], dat$x[,2], data.frame(dat$y, dat$x)) 
+lc_pred <- predict_lc(lc_lm, dat$xnew)  
 
 ## reshape predictions as a matrix
 lc_pred <- matrix(lc_pred, length(dat$px1), length(dat$px2))
