@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
 ```{r}
@@ -141,8 +141,8 @@ lin_beta_l1 <- fit_lin(y=prostate_train$lcavol,
                            loss=L1_loss)
 lin_pred_l1 <- predict_lin(x=x_grid, beta=lin_beta_l1$par)
 lines(x=x_grid, y=lin_pred_l1, col='red', lwd=1)
-legend(3.2, .5, legend=c("L1", "L2", "Tau = 0.25", "Tau = 0.75"),
-       col=c("red", "darkgreen", "blue", "purple"), lty=1, cex=0.8)
+legend(-0.5, 3.75, legend=c("L1", "L2", "Tau = .25", "Tau = .75"),
+       col=c("red", "darkgreen", "blue", "purple"), lty=1, cex=0.7)
 ```
 
 

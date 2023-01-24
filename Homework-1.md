@@ -3,29 +3,12 @@ Homework 1
 Marisa Blackman
 January 15, 2023
 
-# Code from mixture-data-li-knn.R with edits for assignment
-
 ## Data
 
 ``` r
 library('class')
 library('dplyr')
-```
 
-    ## Warning: package 'dplyr' was built under R version 4.0.5
-
-    ## 
-    ## Attaching package: 'dplyr'
-
-    ## The following objects are masked from 'package:stats':
-    ## 
-    ##     filter, lag
-
-    ## The following objects are masked from 'package:base':
-    ## 
-    ##     intersect, setdiff, setequal, union
-
-``` r
 ## load binary classification example data from author website 
 ## 'ElemStatLearn' package no longer available
 load(url('https://web.stanford.edu/~hastie/ElemStatLearn/datasets/ESL.mixture.rda'))
