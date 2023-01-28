@@ -1,15 +1,9 @@
----
-title: "Homework 2"
-author: "Marisa Blackman"
-date: "1/19/2023"
-output: github_document
----
+Homework 2
+================
+Marisa Blackman
+1/19/2023
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
-```
-
-```{r}
+``` r
 library(qrnn)
 
 ## load prostate data
@@ -28,22 +22,21 @@ plot_psa_data <- function(dat=prostate_train) {
        pch = 20)
 }
 plot_psa_data()
-
-
 ```
+
+![](Homework-2_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
 
 # Write functions that implement the L1 loss and tilted absolute loss functions.
 
-```{r}
+``` r
 L1_loss <- function(y, yhat){abs(y - yhat)}
 tilted_loss_25 <- function(y, yhat) {tilted.abs(y-yhat, tau = .25)}
 tilted_loss_75 <- function(y, yhat) {tilted.abs(y-yhat, tau = .75)}
-
 ```
 
 # Create a figure that shows lpsa (x-axis) versus lcavol (y-axis). Add and label the linear model predictors associated with L2 loss, L1 loss, and tilted absolute value loss for tau = 0.25 and 0.75.
 
-```{r}
+``` r
 L2_loss <- function(y, yhat){(y-yhat)^2}
 
 ## fit simple linear model using numerical optimization
@@ -92,9 +85,11 @@ legend(3.2, .5, legend=c("L1", "L2", "Tau = 0.25", "Tau = 0.75"),
        col=c("red", "darkgreen", "blue", "purple"), lty=1, cex=0.8)
 ```
 
-# Write functions to fit and predict from a simple nonlinear model with three parameters defined by 'beta[1] + beta[2]*exp(-beta[3]*x)'.
+![](Homework-2_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
-```{r}
+# Write functions to fit and predict from a simple nonlinear model with three parameters defined by ‘beta\[1\] + beta\[2\]*exp(-beta\[3\]*x)’.
+
+``` r
 fit_lin <- function(y, x, loss=L2_loss, beta_init = c(-1.0, 0.0, -0.3)) {
   err <- function(beta)
     mean(loss(y,  beta[1] + beta[2]*exp(-beta[3]*x))) #function to optimaize and initial values
@@ -104,12 +99,11 @@ fit_lin <- function(y, x, loss=L2_loss, beta_init = c(-1.0, 0.0, -0.3)) {
 
 ## make predictions from linear model
 predict_lin <- function(x, beta) {beta[1] + beta[2]**exp(-beta[3]*x)}
-
 ```
 
-# Create a figure that shows lpsa (x-axis) versus lcavol (y-axis). Add and label (using the 'legend' function) the nonlinear model predictors associated with L2 loss, L1 loss, and tilted absolute value loss for tau = 0.25 and 0.75.
+# Create a figure that shows lpsa (x-axis) versus lcavol (y-axis). Add and label (using the ‘legend’ function) the nonlinear model predictors associated with L2 loss, L1 loss, and tilted absolute value loss for tau = 0.25 and 0.75.
 
-```{r}
+``` r
 ## fit linear model
 lin_beta_l2 <- fit_lin(y=prostate_train$lcavol, x=prostate_train$lpsa, loss=L2_loss)
 
@@ -145,4 +139,4 @@ legend(-0.5, 3.75, legend=c("L1", "L2", "Tau = .25", "Tau = .75"),
        col=c("red", "darkgreen", "blue", "purple"), lty=1, cex=0.7)
 ```
 
-
+![](Homework-2_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
