@@ -1,0 +1,123 @@
+---
+title: "Homework 3"
+author: "Marisa Blackman"
+date: "2/9/2023"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+Use the prostate cancer data to :
+
+# Use the cor function to reproduce the correlations listed in HTF Table 3.1, page 50.
+
+```{r}
+prostate <- 
+  read.table(url(
+    'https://web.stanford.edu/~hastie/ElemStatLearn/datasets/prostate.data'))
+library(tidyverse)
+library(glmnet)
+
+mat <- round(cor(prostate[,c('lweight', 'age', 'lbph', 'svi', 'lcp', 'gleason', 'pgg45')], prostate[,c('lcavol', 'lweight', 'age', 'lbph', 'svi', 'lcp', 'gleason')]), 3)
+
+mat[upper.tri(mat)] <- NA
+
+mat
+```
+
+
+# Treat lcavol as the outcome, and use all other variables in the data set as predictors.
+
+```{r}
+prostate_train <- prostate %>%
+  filter(train == TRUE) %>% 
+  select(-train)
+
+prostate_test <- prostate %>%
+  filter(train == FALSE) %>% 
+  select(-train)
+
+x_train <- prostate_train %>%
+  select(-lcavol)
+
+x_test  <- prostate_test %>%
+  select(-lcavol)
+```
+
+
+# With the training subset of the prostate data, train a least-squares regression model with all predictors using the lm function.
+
+```{r}
+mod1 <- lm(lcavol ~., data = prostate_train)
+summary(mod1)
+```
+
+
+
+
+# Use the testing subset to compute the test error (average squared-error loss) using the fitted least-squares regression model.
+
+```{r}
+pred <- predict(mod1, newdata=prostate_test)
+
+L2_loss <- function(y, yhat){(y-yhat)^2}
+
+mean(L2_loss(prostate_test$lcavol, pred))
+
+```
+
+
+# Train a ridge regression model using the glmnet function, and tune the value of lambda (i.e., use guess and check to find the value of lambda that approximately minimizes the test error).
+
+```{r}
+form  <- lcavol ~  lweight + age + lbph + lcp + pgg45 + lpsa + svi + gleason
+x_inp <- model.matrix(form, data=prostate_train)
+y_out <- prostate_train$lcavol
+
+error <- function(dat, fit, lam, form, loss=L2_loss) {
+  x_inp <- model.matrix(form, data=dat)
+  y_out <- dat$lcavol
+  y_hat <- predict(fit, newx=x_inp, s=lam)  ## see predict.elnet
+  mean(loss(y_out, y_hat))
+}
+
+## train_error at lambda=0
+error(prostate_train, fit, lam=0, form=form)
+
+## testing error at lambda=0
+
+test.error <- matrix(NA, ncol=2, nrow = length(seq(0, 2, by=0.05)))
+for (i in 1:nrow(test.error)){
+  lambda = seq(0, 2, by=0.05)[i]
+  fit <- glmnet(x=x_inp, y=y_out, lambda=lambda, alpha=0)
+  test.error[i, 1] = lambda
+  test.error[i,2] = error(prostate_test, fit, lam=0, form=form)
+}
+
+test.error[which(test.error[,2] == min(test.error[,2])),1]
+```
+
+
+# Create a figure that shows the training and test error associated with ridge regression as a function of lambda
+
+```{r}
+plot(test.error[,1], test.error[,2])
+```
+
+
+# Create a path diagram of the ridge regression analysis, similar to HTF Figure 3.8
+
+```{r}
+require(rms)
+    ridgefits = ols(form,
+       method="qr", data=prostate_train,
+    se.fit = TRUE, x=TRUE, y=TRUE)
+    p <- pentrace(ridgefits, seq(0,100,by=.05))
+    effective.df(ridgefits,p)
+    
+    plot(p$df, p$penalty)
+```
+
+
