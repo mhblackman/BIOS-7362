@@ -88,12 +88,15 @@ error(prostate_train, fit, lam=0, form=form)
 
 ## testing error at lambda=0
 
-test.error <- matrix(NA, ncol=2, nrow = length(seq(0, 2, by=0.05)))
+test.error <- matrix(NA, ncol=2, nrow = length(seq(0, 100, by=0.05)))
+coefs <- matrix(NA, ncol = 8, nrow = length(seq(0, 100, by=0.05)))
 for (i in 1:nrow(test.error)){
-  lambda = seq(0, 2, by=0.05)[i]
+  lambda = seq(0, 100, by=0.05)[i]
   fit <- glmnet(x=x_inp, y=y_out, lambda=lambda, alpha=0)
   test.error[i, 1] = lambda
   test.error[i,2] = error(prostate_test, fit, lam=0, form=form)
+  coefs[i,] <- t(as.matrix(coef(fit))[3:10])
+  
 }
 
 test.error[which(test.error[,2] == min(test.error[,2])),1]
@@ -118,6 +121,86 @@ require(rms)
     effective.df(ridgefits,p)
     
     plot(p$df, p$penalty)
+    
+    plot(p$results.all$df, coefs[,1], type = 'l')
+    lines(p$results.all$df, coefs[,2])
+    lines(p$results.all$df, coefs[,3])
+    lines(p$results.all$df, coefs[,4])
+    lines(p$results.all$df, coefs[,5])
+    lines(p$results.all$df, coefs[,6])
+    lines(p$results.all$df, coefs[,7])
+    lines(p$results.all$df, coefs[,8])
+
 ```
 
+```{r}
+NewtonRaphson <- function(f, fprime, x = 1, ..., zero = 1e-05) {
+    # Check provided arguments for derivative function
+    mf <- match.call(expand.dots = FALSE)
+    m <- match(c("fprime"), names(mf))
+    # If a derivative function was not provided, create a numerical one
+    if (is.na(m)) {
+        fprime <- function(x, ...) {
+            dx <- 0.001
+            dy <- f(x + dx/2, ...) - f(x - dx/2, ...)
+            return(dy/dx)
+        }
+    }
+    # Iterate Newton Raphson algorithm until zero
+    while (abs(f(x, ...)) > zero) {
+        x <- x - f(x, ...)/fprime(x, ...)
+    }
+    return(x)
+}
+DFtoLambda <- function(X, r = 0.1) {
+    # Returns a set of lambdas (in increasing order) corresponding to ridge
+    # regression's effective degrees of freedom from 0 to the number of
+    # columns of X with refinement r.
+    X <- as.matrix(X)
+    dsq <- eigen(t(X) %*% X, only.values = T)$values
+    df <- seq(ncol(X), 0, by = -r)
+    lam <- rep(NA, length(df))
+    
+    h <- function(lam, dsq, df) {
+        return(sum(dsq/(dsq + lam)) - df)
+    }
+    
+    hprime <- function(lam, dsq, df) {
+        return(-sum(dsq/(dsq + lam)^2))
+    }
+    
+    lam[1] <- 0
+    for (i in 2:length(lam)) {
+        # Use previous lambda as initial value
+        lam[i] <- NewtonRaphson(h, hprime, x = lam[i - 1], dsq = dsq, df = df[i])
+    }
+    return(lam)
+}
+
+lambdas <- DFtoLambda(x_train)
+X = x_train
+r = 0.1
+X <- as.matrix(X)
+    dsq <- eigen(t(X) %*% X, only.values = T)$values
+    df <- seq(ncol(X), 0, by = -r)
+    
+coefs <- matrix(NA, ncol = 8, nrow = length(lambdas))
+for (i in 1:nrow(coefs)){
+  lambda = lambdas[i]
+  fit <- glmnet(x=x_inp, y=y_out, lambda=lambda, alpha=0)
+  coefs[i,] <- t(as.matrix(coef(fit))[3:10])
+}
+
+coefs <- as.data.frame(coefs)
+coefs$df <- df
+
+plot(coefs$df, coefs[,1], type = 'l')
+    lines(coefs$df, coefs[,2])
+    lines(coefs$df, coefs[,3])
+    lines(coefs$df, coefs[,4])
+    lines(coefs$df, coefs[,5])
+    lines(coefs$df, coefs[,6])
+    lines(coefs$df, coefs[,7])
+    lines(coefs$df, coefs[,8])
+```
 
