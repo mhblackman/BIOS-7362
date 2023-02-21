@@ -14,7 +14,11 @@ prostate <-
 library(tidyverse)
 library(glmnet)
 
-mat <- round(cor(prostate[,c('lweight', 'age', 'lbph', 'svi', 'lcp', 'gleason', 'pgg45')], prostate[,c('lcavol', 'lweight', 'age', 'lbph', 'svi', 'lcp', 'gleason')]), 3)
+prostate_train <- prostate %>%
+  filter(train == TRUE) %>% 
+  select(-train)
+
+mat <- round(cor(prostate_train[,c('lweight', 'age', 'lbph', 'svi', 'lcp', 'gleason', 'pgg45')], prostate_train[,c('lcavol', 'lweight', 'age', 'lbph', 'svi', 'lcp', 'gleason')]), 3)
 
 mat[upper.tri(mat)] <- NA
 
@@ -22,13 +26,13 @@ mat
 ```
 
     ##         lcavol lweight   age   lbph   svi   lcp gleason
-    ## lweight  0.281      NA    NA     NA    NA    NA      NA
-    ## age      0.225   0.348    NA     NA    NA    NA      NA
-    ## lbph     0.027   0.442 0.350     NA    NA    NA      NA
-    ## svi      0.539   0.155 0.118 -0.086    NA    NA      NA
-    ## lcp      0.675   0.165 0.128 -0.007 0.673    NA      NA
-    ## gleason  0.432   0.057 0.269  0.078 0.320 0.515      NA
-    ## pgg45    0.434   0.107 0.276  0.078 0.458 0.632   0.752
+    ## lweight  0.300      NA    NA     NA    NA    NA      NA
+    ## age      0.286   0.317    NA     NA    NA    NA      NA
+    ## lbph     0.063   0.437 0.287     NA    NA    NA      NA
+    ## svi      0.593   0.181 0.129 -0.139    NA    NA      NA
+    ## lcp      0.692   0.157 0.173 -0.089 0.671    NA      NA
+    ## gleason  0.426   0.024 0.366  0.033 0.307 0.476      NA
+    ## pgg45    0.483   0.074 0.276 -0.030 0.481 0.663   0.757
 
 # Treat lcavol as the outcome, and use all other variables in the data set as predictors.
 
@@ -133,19 +137,32 @@ Lambda = 0.1 minimized test error.
 
 ``` r
 #training error 
+lambdas <- seq(0,1,by=.05)
+
 train.error <- matrix(NA, ncol=2, nrow = length(lambdas))
 coefs <- matrix(NA, ncol = 8, nrow = length(lambdas))
-for (i in 1:nrow(test.error)){
+for (i in 1:nrow(train.error)){
   lambda = lambdas[i]
   fit <- glmnet(x=x_inp, y=y_out, lambda=lambda, alpha=0)
   train.error[i, 1] = lambda
   train.error[i,2] = error(prostate_train, fit, lam=0, form=form)
   coefs[i,] <- t(as.matrix(coef(fit))[3:10])
-  
 }
 
-plot(test.error[,1], test.error[,2], ylab = "error", ylim=c(0, max(train.error[,2])))
-lines(train.error[,1], train.error[,2])
+test.error <- matrix(NA, ncol=2, nrow = length(lambdas))
+coefs <- matrix(NA, ncol = 8, nrow = length(lambdas))
+for (i in 1:nrow(test.error)){
+  lambda = lambdas[i]
+  fit <- glmnet(x=x_inp, y=y_out, lambda=lambda, alpha=0)
+  test.error[i, 1] = lambda
+  test.error[i,2] = error(prostate_test, fit, lam=0, form=form)
+  coefs[i,] <- t(as.matrix(coef(fit))[3:10])
+}
+
+plot(test.error[,1], test.error[,2], ylab = "error", ylim=c(.2, max(train.error[,2])), type = 'l', col= 'blue', xlab= "lambda")
+lines(train.error[,1], train.error[,2], col = 'red')
+legend(.5, .4, legend=c("Training Error", "Test Error"),
+       col=c("red", "blue"), lty=1, cex=0.8)
 ```
 
 ![](Homework-3_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
@@ -171,14 +188,16 @@ for (j in 1:length(lambdas)){
   }
 }
 
-plot(eff_df[,2], coefs[,1], type = 'l', ylim = c(min(coefs), max(coefs)))
-lines(eff_df[,2], coefs[,2], type = 'l')
-lines(eff_df[,2], coefs[,3], type = 'l')
-lines(eff_df[,2], coefs[,4], type = 'l')
-lines(eff_df[,2], coefs[,5], type = 'l')
-lines(eff_df[,2], coefs[,6], type = 'l')
-lines(eff_df[,2], coefs[,7], type = 'l')
-lines(eff_df[,2], coefs[,8], type = 'l')
+plot(eff_df[,2], coefs[,1], type = 'l', ylim = c(min(coefs), .67), col = "black", xlab = "effective df", ylab = "coef est")
+lines(eff_df[,2], coefs[,2], type = 'l', col = "red")
+lines(eff_df[,2], coefs[,3], type = 'l', col = "blue")
+lines(eff_df[,2], coefs[,4], type = 'l', col = "darkgreen")
+lines(eff_df[,2], coefs[,5], type = 'l', col = "purple")
+lines(eff_df[,2], coefs[,6], type = 'l', col = "pink")
+lines(eff_df[,2], coefs[,7], type = 'l', col = "orange")
+lines(eff_df[,2], coefs[,8], type = 'l', col = "brown")
+legend(7.725, .65, legend=c("lweight", "age", "lbph", "lcp", "pgg45", "lpsa", "svi", "gleason"),
+       col=c("black", "red", "blue", "darkgreen", "purple", "pink", "orange", "brown"), lty=1, cex=0.8)
 ```
 
 ![](Homework-3_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
